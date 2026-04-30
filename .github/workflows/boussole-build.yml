@@ -34,14 +34,23 @@ jobs:
         working-directory: boussole
         run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 
+      - name: Generate Gradle wrapper
+        working-directory: boussole
+        run: gradle wrapper --gradle-version 8.6
+
       - name: Build Debug APK
         working-directory: boussole
-        run: gradle assembleDebug
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Rename APK with build number
+        run: |
+          mkdir -p output
+          cp boussole/app/build/outputs/apk/debug/app-debug.apk output/boussole-debug-${{ github.run_number }}.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: boussole-debug-apk
-          path: boussole/app/build/outputs/apk/debug/app-debug.apk
+          path: output/boussole-debug-${{ github.run_number }}.apk
           if-no-files-found: error
           retention-days: 30

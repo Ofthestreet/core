@@ -18,7 +18,7 @@
         android:id="@+id/azimuthText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="0.0°"
+        android:text="0°"
         android:textColor="#FFFFFF"
         android:textSize="52sp"
         android:fontFamily="monospace"
@@ -31,7 +31,15 @@
         android:text="Nord"
         android:textColor="#FF4444"
         android:textSize="26sp"
-        android:paddingTop="4dp"
-        android:paddingBottom="36dp" />
+        android:paddingTop="4dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="made by ofthestreet with Claude"
+        android:textColor="#44FFFFFF"
+        android:textSize="11sp"
+        android:paddingTop="8dp"
+        android:paddingBottom="16dp" />
 
 </LinearLayout>
