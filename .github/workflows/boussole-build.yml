@@ -1,0 +1,47 @@
+name: Build Boussole APK
+
+on:
+  push:
+    branches: [ main, 'claude/**' ]
+    paths:
+      - 'boussole/**'
+      - '.github/workflows/boussole-build.yml'
+  pull_request:
+    paths:
+      - 'boussole/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: "8.6"
+
+      - name: Create local.properties
+        working-directory: boussole
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+      - name: Build Debug APK
+        working-directory: boussole
+        run: gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: boussole-debug-apk
+          path: boussole/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30

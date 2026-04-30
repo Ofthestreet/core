@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#1A1A2E"
+    android:gravity="center_horizontal"
+    android:keepScreenOn="true">
+
+    <com.ofthestreet.boussole.CompassView
+        android:id="@+id/compassView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <TextView
+        android:id="@+id/azimuthText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0.0°"
+        android:textColor="#FFFFFF"
+        android:textSize="52sp"
+        android:fontFamily="monospace"
+        android:paddingTop="12dp" />
+
+    <TextView
+        android:id="@+id/directionText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nord"
+        android:textColor="#FF4444"
+        android:textSize="26sp"
+        android:paddingTop="4dp"
+        android:paddingBottom="36dp" />
+
+</LinearLayout>
