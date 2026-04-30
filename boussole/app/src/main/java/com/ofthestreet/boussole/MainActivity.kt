@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             val normalizedAzimuth = (azimuthDeg + 360) % 360
 
             compassView.setAzimuth(normalizedAzimuth)
-            azimuthText.text = String.format("%.1f°", normalizedAzimuth)
+            azimuthText.text = "${normalizedAzimuth.toInt()}°"
             directionText.text = getCardinalDirection(normalizedAzimuth)
         }
     }
