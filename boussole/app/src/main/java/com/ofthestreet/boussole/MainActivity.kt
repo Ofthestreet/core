@@ -1,12 +1,15 @@
 package com.ofthestreet.boussole
 
+import android.graphics.Color
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 
 class MainActivity : AppCompatActivity(), SensorEventListener {
 
@@ -15,6 +18,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     private lateinit var compassView: CompassView
     private lateinit var azimuthText: TextView
     private lateinit var directionText: TextView
+    private lateinit var attributionText: TextView
+    private lateinit var rootLayout: LinearLayout
+    private lateinit var modeSwitch: SwitchCompat
 
     private val rotationMatrix = FloatArray(9)
     private val orientationAngles = FloatArray(3)
@@ -23,12 +29,36 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        rootLayout = findViewById(R.id.rootLayout)
         compassView = findViewById(R.id.compassView)
         azimuthText = findViewById(R.id.azimuthText)
         directionText = findViewById(R.id.directionText)
+        attributionText = findViewById(R.id.attributionText)
+        modeSwitch = findViewById(R.id.modeSwitch)
 
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         rotationVectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+
+        modeSwitch.setOnCheckedChangeListener { _, isChecked ->
+            applyTheme(lightMode = isChecked)
+        }
+    }
+
+    private fun applyTheme(lightMode: Boolean) {
+        if (lightMode) {
+            rootLayout.setBackgroundColor(Color.parseColor("#F0F0F5"))
+            azimuthText.setTextColor(Color.parseColor("#1A1A2E"))
+            directionText.setTextColor(Color.parseColor("#CC2222"))
+            attributionText.setTextColor(Color.parseColor("#777788"))
+            modeSwitch.setTextColor(Color.parseColor("#1A1A2E"))
+        } else {
+            rootLayout.setBackgroundColor(Color.parseColor("#1A1A2E"))
+            azimuthText.setTextColor(Color.WHITE)
+            directionText.setTextColor(Color.parseColor("#FF4444"))
+            attributionText.setTextColor(Color.parseColor("#9090A0"))
+            modeSwitch.setTextColor(Color.WHITE)
+        }
+        compassView.setDarkMode(!lightMode)
     }
 
     override fun onResume() {

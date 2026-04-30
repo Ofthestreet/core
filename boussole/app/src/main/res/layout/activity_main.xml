@@ -1,12 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#1A1A2E"
     android:gravity="center_horizontal"
     android:keepScreenOn="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:paddingEnd="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="4dp">
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/modeSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mode clair"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp" />
+    </LinearLayout>
 
     <com.ofthestreet.boussole.CompassView
         android:id="@+id/compassView"
@@ -34,12 +53,13 @@
         android:paddingTop="4dp" />
 
     <TextView
+        android:id="@+id/attributionText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="made by ofthestreet with Claude"
-        android:textColor="#44FFFFFF"
+        android:textColor="#9090A0"
         android:textSize="11sp"
-        android:paddingTop="8dp"
+        android:paddingTop="10dp"
         android:paddingBottom="16dp" />
 
 </LinearLayout>
