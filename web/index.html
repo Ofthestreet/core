@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bateau Expense">
+  <meta name="theme-color" content="#1a6bbf">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <title>⛵ Bateau Expense</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --blue: #1a6bbf;
+      --blue-dark: #0f4d8a;
+      --blue-mid: #1560aa;
+      --blue-light: #2d8ce8;
+      --red: #ff453a;
+      --green: #30d158;
+      --separator: rgba(60,60,67,0.12);
+      --bg: #f2f2f7;
+      --card: #ffffff;
+      --label: #1c1c1e;
+      --secondary: #3c3c43cc;
+      --tertiary: #3c3c4399;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(180deg, var(--blue) 0%, var(--blue-mid) 100%);
+      color: white;
+      padding: 10px 16px 10px;
+      padding-top: calc(10px + env(safe-area-inset-top));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+
+    .header-actions { display: flex; gap: 4px; }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: background 0.15s;
+    }
+    .icon-btn:active { background: rgba(255,255,255,0.2); }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      background: var(--blue);
+      color: white;
+      padding: 8px 16px 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .stat-label { font-size: 11px; opacity: 0.75; margin-bottom: 1px; }
+    .stat-value { font-size: 18px; font-weight: 700; }
+
+    /* ── Participants bar ── */
+    .participants-bar {
+      background: var(--blue-dark);
+      padding: 8px 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .participants-bar::-webkit-scrollbar { display: none; }
+
+    .participants-scroll {
+      display: flex;
+      gap: 8px;
+      padding: 0 14px;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px 5px 12px;
+      background: white;
+      color: var(--blue);
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+      user-select: none;
+    }
+
+    .chip-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--blue);
+      opacity: 0.45;
+      font-size: 13px;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: opacity 0.15s;
+    }
+    .chip-remove:active { opacity: 0.9; }
+
+    .chip-add {
+      background: rgba(255,255,255,0.18);
+      color: white;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      cursor: pointer;
+      padding: 5px 14px;
+      gap: 5px;
+    }
+
+    /* ── Expense list ── */
+    .expense-list {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: calc(88px + env(safe-area-inset-bottom));
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--tertiary);
+      padding: 60px 24px;
+    }
+    .empty-icon { font-size: 64px; line-height: 1; }
+    .empty-title { font-size: 20px; font-weight: 600; color: var(--secondary); }
+    .empty-sub { font-size: 15px; }
+
+    .expense-item {
+      background: white;
+      padding: 13px 16px 13px 16px;
+      border-bottom: 0.5px solid var(--separator);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .expense-content { flex: 1; min-width: 0; }
+
+    .expense-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 3px;
+    }
+
+    .expense-desc {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--label);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .expense-amount {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--blue-light);
+      flex-shrink: 0;
+    }
+
+    .expense-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+
+    .expense-paidby { font-size: 13px; color: var(--secondary); }
+    .expense-share { font-size: 12px; color: var(--tertiary); flex-shrink: 0; }
+
+    .expense-participants {
+      font-size: 12px;
+      color: var(--tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .expense-del {
+      background: none;
+      border: none;
+      color: var(--red);
+      opacity: 0.5;
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.15s, background 0.15s;
+    }
+    .expense-del:active { opacity: 1; background: rgba(255,69,58,0.1); }
+
+    /* ── FAB ── */
+    .fab {
+      position: fixed;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: white;
+      border: none;
+      font-size: 28px;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(26,107,191,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s, box-shadow 0.15s;
+      z-index: 20;
+    }
+    .fab:active { transform: scale(0.93); box-shadow: 0 2px 10px rgba(26,107,191,0.35); }
+
+    /* ── Bottom sheet modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      display: flex;
+      align-items: flex-end;
+      animation: bg-in 0.25s ease;
+    }
+    @keyframes bg-in { from { background: rgba(0,0,0,0); } to { background: rgba(0,0,0,0.45); } }
+
+    .modal {
+      background: var(--bg);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-height: 94dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      animation: sheet-up 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    }
+    @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 16px 6px;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .modal-title { font-size: 17px; font-weight: 700; color: var(--label); }
+
+    .modal-btn {
+      background: none;
+      border: none;
+      color: var(--blue);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px 2px;
+      min-width: 60px;
+    }
+    .modal-btn.right { text-align: right; font-weight: 700; }
+    .modal-btn.left { text-align: left; }
+
+    /* ── Form sections ── */
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 14px 16px 5px;
+    }
+
+    .form-card {
+      background: var(--card);
+      margin: 0 16px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .form-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      gap: 10px;
+      border-bottom: 0.5px solid var(--separator);
+    }
+    .form-row:last-child { border-bottom: none; }
+
+    .form-label {
+      font-size: 16px;
+      color: var(--label);
+      min-width: 80px;
+    }
+
+    .form-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      color: var(--label);
+      background: transparent;
+      min-width: 0;
+    }
+    .form-input::placeholder { color: #aeaeb2; }
+
+    .form-select {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      color: var(--label);
+      background: transparent;
+      -webkit-appearance: auto;
+    }
+
+    .form-currency { font-size: 16px; color: #aeaeb2; flex-shrink: 0; }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 0.5px solid var(--separator);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.1s;
+    }
+    .check-row:last-child { border-bottom: none; }
+    .check-row:active { background: rgba(0,0,0,0.04); }
+    .check-row span { font-size: 16px; color: var(--label); }
+    .check-icon { font-size: 20px; }
+
+    .share-hint {
+      font-size: 13px;
+      color: var(--secondary);
+      padding: 8px 16px 0;
+      min-height: 24px;
+    }
+
+    /* ── Balance ── */
+    .bal-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 0.5px solid var(--separator);
+    }
+    .bal-row:last-child { border-bottom: none; }
+    .bal-emoji { font-size: 20px; min-width: 26px; text-align: center; }
+    .bal-name { flex: 1; font-size: 16px; color: var(--label); }
+    .bal-amount { font-size: 16px; font-weight: 600; }
+    .bal-pos { color: var(--green); }
+    .bal-neg { color: var(--red); }
+    .bal-zero { color: var(--tertiary); }
+
+    .settle-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 16px;
+      border-bottom: 0.5px solid var(--separator);
+    }
+    .settle-row:last-child { border-bottom: none; }
+    .settle-from { font-size: 15px; color: var(--red); font-weight: 500; }
+    .settle-arrow { font-size: 12px; color: var(--tertiary); flex-shrink: 0; }
+    .settle-to { font-size: 15px; color: var(--green); font-weight: 500; flex: 1; }
+    .settle-amt { font-size: 15px; font-weight: 600; color: var(--blue); }
+
+    .all-good {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 16px;
+      font-size: 15px;
+      color: var(--green);
+    }
+
+    /* ── Alert / Dialog ── */
+    .alert-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: bg-in 0.2s ease;
+    }
+
+    .alert-box {
+      background: white;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 320px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+      animation: scale-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes scale-in { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .alert-body { padding: 20px 16px 8px; text-align: center; }
+    .alert-title { font-size: 17px; font-weight: 700; color: var(--label); margin-bottom: 6px; }
+    .alert-msg { font-size: 13px; color: var(--secondary); line-height: 1.45; }
+
+    .alert-input {
+      display: block;
+      margin: 10px 14px;
+      border: 1px solid var(--separator);
+      border-radius: 9px;
+      padding: 10px 12px;
+      font-size: 16px;
+      width: calc(100% - 28px);
+      outline: none;
+      color: var(--label);
+    }
+    .alert-input:focus { border-color: var(--blue); }
+
+    .alert-btns {
+      display: flex;
+      border-top: 0.5px solid var(--separator);
+      margin-top: 8px;
+    }
+    .alert-btn {
+      flex: 1;
+      border: none;
+      background: none;
+      padding: 14px;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--blue);
+      transition: background 0.1s;
+    }
+    .alert-btn:active { background: rgba(0,0,0,0.06); }
+    .alert-btn + .alert-btn { border-left: 0.5px solid var(--separator); font-weight: 700; }
+    .alert-btn.destructive { color: var(--red); }
+
+    /* ── Install banner (iOS hint) ── */
+    .install-banner {
+      background: var(--blue);
+      color: white;
+      font-size: 13px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slide-down 0.4s ease;
+    }
+    @keyframes slide-down { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+    .install-banner-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      margin-left: auto;
+      opacity: 0.7;
+      padding: 2px 4px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- iOS install hint (shown once) -->
+<div class="install-banner" id="install-banner" style="display:none">
+  <span>📲</span>
+  <span>Installez l'app : appuyez sur <strong>Partager</strong> → <strong>Sur l'écran d'accueil</strong></span>
+  <button class="install-banner-close" onclick="dismissInstall()">✕</button>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-title">⛵ Bateau Expense</div>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="showBalance()" title="Bilan">📊</button>
+    <button class="icon-btn" onclick="confirmClear()" title="Effacer tout" style="opacity:.8">🗑️</button>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-bar">
+  <div>
+    <div class="stat-label">Total dépenses</div>
+    <div class="stat-value" id="stat-total">0,00 €</div>
+  </div>
+  <div style="text-align:right">
+    <div class="stat-label">Dépenses</div>
+    <div class="stat-value" id="stat-count">0</div>
+  </div>
+</div>
+
+<!-- Participants -->
+<div class="participants-bar">
+  <div class="participants-scroll" id="participants-scroll"></div>
+</div>
+
+<!-- Expense list -->
+<div class="expense-list" id="expense-list"></div>
+
+<!-- FAB -->
+<button class="fab" onclick="showAddExpense()">+</button>
+
+<!-- Modal root -->
+<div id="modal-root"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════════
+let state = { participants: [], expenses: [] };
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('bateauExpense_v2');
+    if (s) state = JSON.parse(s);
+  } catch(e) {}
+}
+
+function saveState() {
+  localStorage.setItem('bateauExpense_v2', JSON.stringify(state));
+}
+
+// ═══════════════════════════════════════════════════
+// Formatting
+// ═══════════════════════════════════════════════════
+const fmt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+const fmtCur = v => fmt.format(v);
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════════
+// Computed
+// ═══════════════════════════════════════════════════
+function computeBalances() {
+  const bal = {};
+  state.participants.forEach(p => bal[p] = 0);
+  state.expenses.forEach(exp => {
+    const share = exp.amount / exp.participants.length;
+    bal[exp.paidBy] = (bal[exp.paidBy] || 0) + exp.amount;
+    exp.participants.forEach(p => bal[p] = (bal[p] || 0) - share);
+  });
+  return Object.entries(bal).map(([name, amount]) => ({ name, amount }));
+}
+
+function computeSettlements() {
+  const balances = computeBalances();
+  const debtors = balances.filter(b => b.amount < -0.01).map(b => ({...b}));
+  const creditors = balances.filter(b => b.amount > 0.01).map(b => ({...b}));
+  const result = [];
+  let i = 0, j = 0;
+  while (i < debtors.length && j < creditors.length) {
+    const amount = Math.min(Math.abs(debtors[i].amount), creditors[j].amount);
+    result.push({ from: debtors[i].name, to: creditors[j].name, amount });
+    debtors[i].amount += amount;
+    creditors[j].amount -= amount;
+    if (Math.abs(debtors[i].amount) < 0.01) i++;
+    if (creditors[j].amount < 0.01) j++;
+  }
+  return result;
+}
+
+// ═══════════════════════════════════════════════════
+// Render
+// ═══════════════════════════════════════════════════
+function render() {
+  renderStats();
+  renderParticipants();
+  renderExpenses();
+}
+
+function renderStats() {
+  const total = state.expenses.reduce((s, e) => s + e.amount, 0);
+  document.getElementById('stat-total').textContent = fmtCur(total);
+  document.getElementById('stat-count').textContent = state.expenses.length;
+}
+
+function renderParticipants() {
+  const container = document.getElementById('participants-scroll');
+  container.innerHTML = '';
+  state.participants.forEach(name => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.innerHTML =
+      `<span>${esc(name)}</span>` +
+      `<button class="chip-remove" aria-label="Supprimer ${esc(name)}">✕</button>`;
+    chip.querySelector('.chip-remove').onclick = () => confirmRemoveParticipant(name);
+    container.appendChild(chip);
+  });
+  const addBtn = document.createElement('button');
+  addBtn.className = 'chip chip-add';
+  addBtn.textContent = '+ Ajouter';
+  addBtn.onclick = showAddParticipant;
+  container.appendChild(addBtn);
+}
+
+function renderExpenses() {
+  const container = document.getElementById('expense-list');
+  if (state.expenses.length === 0) {
+    container.innerHTML =
+      `<div class="empty-state">
+        <div class="empty-icon">⛵</div>
+        <div class="empty-title">Aucune dépense</div>
+        <div class="empty-sub">Appuyez sur + pour commencer</div>
+      </div>`;
+    return;
+  }
+  container.innerHTML = '';
+  state.expenses.forEach((exp, i) => {
+    const share = exp.amount / exp.participants.length;
+    const item = document.createElement('div');
+    item.className = 'expense-item';
+    item.innerHTML =
+      `<div class="expense-content">
+        <div class="expense-top">
+          <div class="expense-desc">${esc(exp.description)}</div>
+          <div class="expense-amount">${fmtCur(exp.amount)}</div>
+        </div>
+        <div class="expense-meta">
+          <div class="expense-paidby">👤 ${esc(exp.paidBy)}</div>
+          <div class="expense-share">${fmtCur(share)}/pers.</div>
+        </div>
+        <div class="expense-participants">${exp.participants.map(esc).join(' · ')}</div>
+      </div>
+      <button class="expense-del" aria-label="Supprimer">✕</button>`;
+    item.querySelector('.expense-del').onclick = () => confirmDeleteExpense(i);
+    container.appendChild(item);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// Actions
+// ═══════════════════════════════════════════════════
+function addParticipant(name) {
+  if (!name || state.participants.includes(name)) return;
+  state.participants.push(name);
+  saveState(); render();
+}
+
+function confirmRemoveParticipant(name) {
+  showConfirm(`Supprimer ${name} ?`, 'Les dépenses existantes resteront enregistrées.', 'Supprimer', () => {
+    state.participants = state.participants.filter(p => p !== name);
+    saveState(); render();
+  });
+}
+
+function addExpense(exp) {
+  state.expenses.unshift(exp);
+  saveState(); render();
+}
+
+function confirmDeleteExpense(index) {
+  showConfirm('Supprimer cette dépense ?', '', 'Supprimer', () => {
+    state.expenses.splice(index, 1);
+    saveState(); render();
+  });
+}
+
+function confirmClear() {
+  if (!state.expenses.length) return;
+  showConfirm(
+    'Supprimer toutes les dépenses ?',
+    `${state.expenses.length} dépense(s) seront supprimées.`,
+    'Tout effacer',
+    () => { state.expenses = []; saveState(); render(); }
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// Modals
+// ═══════════════════════════════════════════════════
+function openModal(html) {
+  const root = document.getElementById('modal-root');
+  root.innerHTML = html;
+  setTimeout(() => {
+    const inp = root.querySelector('input:not([type=checkbox])');
+    if (inp) inp.focus();
+  }, 350);
+}
+function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
+
+// Add participant
+function showAddParticipant() {
+  showPrompt('Nouveau participant', 'Prénom ou surnom', 'Ajouter', val => addParticipant(val.trim()));
+}
+
+// Add expense
+let _sel = new Set();
+
+function showAddExpense() {
+  if (!state.participants.length) {
+    showAlert('Aucun participant', "Ajoutez d'abord des participants avec le bouton « + Ajouter ».");
+    return;
+  }
+  _sel = new Set(state.participants);
+
+  const payerOpts = state.participants.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  const checkRows = state.participants.map(n =>
+    `<div class="check-row" data-name="${esc(n)}">
+      <span>${esc(n)}</span>
+      <span class="check-icon">${_sel.has(n) ? '✅' : '⭕'}</span>
+    </div>`
+  ).join('');
+
+  openModal(`
+    <div class="modal-overlay" id="add-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <button class="modal-btn left" onclick="closeModal()">Annuler</button>
+          <div class="modal-title">Nouvelle dépense ⛵</div>
+          <button class="modal-btn right" onclick="submitExpense()">Ajouter</button>
+        </div>
+
+        <div class="section-title">Dépense</div>
+        <div class="form-card">
+          <div class="form-row">
+            <input class="form-input" id="exp-desc" type="text" placeholder="Description (ex: Carburant, Repas…)" autocapitalize="sentences">
+          </div>
+          <div class="form-row">
+            <input class="form-input" id="exp-amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0,00">
+            <span class="form-currency">€</span>
+          </div>
+        </div>
+
+        <div class="section-title">Qui a payé ?</div>
+        <div class="form-card">
+          <div class="form-row">
+            <select class="form-select" id="exp-paidby">${payerOpts}</select>
+          </div>
+        </div>
+
+        <div class="section-title">Qui partage ?</div>
+        <div class="form-card" id="checks-container">${checkRows}</div>
+        <div class="share-hint" id="share-hint"></div>
+        <div style="height:16px"></div>
+      </div>
+    </div>`);
+
+  // Close on overlay click
+  document.getElementById('add-overlay').addEventListener('click', e => {
+    if (e.target.id === 'add-overlay') closeModal();
+  });
+
+  // Participant toggle
+  document.getElementById('checks-container').addEventListener('click', e => {
+    const row = e.target.closest('.check-row');
+    if (!row) return;
+    const name = row.dataset.name;
+    if (_sel.has(name)) _sel.delete(name); else _sel.add(name);
+    row.querySelector('.check-icon').textContent = _sel.has(name) ? '✅' : '⭕';
+    updateHint();
+  });
+
+  document.getElementById('exp-amount').addEventListener('input', updateHint);
+}
+
+function updateHint() {
+  const amt = parseFloat(document.getElementById('exp-amount')?.value);
+  const n = _sel.size;
+  const hint = document.getElementById('share-hint');
+  if (!hint) return;
+  hint.textContent = (n > 0 && amt > 0) ? `→ ${fmtCur(amt / n)} par personne` : '';
+}
+
+function submitExpense() {
+  const desc = document.getElementById('exp-desc').value.trim();
+  const amt = parseFloat(document.getElementById('exp-amount').value);
+  const paidBy = document.getElementById('exp-paidby').value;
+
+  if (!desc) return showAlert('Champ manquant', 'Entrez une description.');
+  if (!amt || amt <= 0) return showAlert('Champ manquant', 'Entrez un montant valide.');
+  if (!_sel.size) return showAlert('Champ manquant', 'Sélectionnez au moins un participant.');
+
+  closeModal();
+  addExpense({ id: Date.now(), description: desc, amount: amt, paidBy, participants: [..._sel] });
+}
+
+// Balance
+function showBalance() {
+  const balances = computeBalances();
+  const settlements = computeSettlements();
+
+  const balRows = balances.length
+    ? balances.map(b => {
+        const emoji = b.amount > 0.01 ? '💰' : b.amount < -0.01 ? '💸' : '✅';
+        const cls = b.amount > 0.01 ? 'bal-pos' : b.amount < -0.01 ? 'bal-neg' : 'bal-zero';
+        const sign = b.amount > 0.005 ? '+' : '';
+        return `<div class="bal-row">
+          <div class="bal-emoji">${emoji}</div>
+          <div class="bal-name">${esc(b.name)}</div>
+          <div class="bal-amount ${cls}">${sign}${fmtCur(b.amount)}</div>
+        </div>`;
+      }).join('')
+    : '<div class="bal-row"><div class="bal-name" style="color:var(--tertiary)">Aucun participant</div></div>';
+
+  const settleRows = settlements.length
+    ? settlements.map(s =>
+        `<div class="settle-row">
+          <span class="settle-from">${esc(s.from)}</span>
+          <span class="settle-arrow">→</span>
+          <span class="settle-to">${esc(s.to)}</span>
+          <span class="settle-amt">${fmtCur(s.amount)}</span>
+        </div>`).join('')
+    : `<div class="all-good">✅ Tout est équilibré !</div>`;
+
+  openModal(`
+    <div class="modal-overlay" id="bal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <div style="min-width:60px"></div>
+          <div class="modal-title">Bilan ⚖️</div>
+          <button class="modal-btn right" onclick="closeModal()">Fermer</button>
+        </div>
+
+        <div class="section-title">Soldes</div>
+        <div class="form-card">${balRows}</div>
+
+        <div class="section-title">Remboursements à faire</div>
+        <div class="form-card">${settleRows}</div>
+        <div style="height:16px"></div>
+      </div>
+    </div>`);
+
+  document.getElementById('bal-overlay').addEventListener('click', e => {
+    if (e.target.id === 'bal-overlay') closeModal();
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// Dialog helpers
+// ═══════════════════════════════════════════════════
+function showAlert(title, msg) {
+  const el = document.createElement('div');
+  el.className = 'alert-overlay';
+  el.innerHTML =
+    `<div class="alert-box">
+      <div class="alert-body">
+        <div class="alert-title">${esc(title)}</div>
+        ${msg ? `<div class="alert-msg">${esc(msg)}</div>` : ''}
+      </div>
+      <div class="alert-btns">
+        <button class="alert-btn" style="font-weight:700">OK</button>
+      </div>
+    </div>`;
+  el.querySelector('.alert-btn').onclick = () => el.remove();
+  document.body.appendChild(el);
+}
+
+function showConfirm(title, msg, confirmLabel, onConfirm) {
+  const el = document.createElement('div');
+  el.className = 'alert-overlay';
+  el.innerHTML =
+    `<div class="alert-box">
+      <div class="alert-body">
+        <div class="alert-title">${esc(title)}</div>
+        ${msg ? `<div class="alert-msg">${esc(msg)}</div>` : ''}
+      </div>
+      <div class="alert-btns">
+        <button class="alert-btn">Annuler</button>
+        <button class="alert-btn destructive">${esc(confirmLabel)}</button>
+      </div>
+    </div>`;
+  const [cancel, confirm] = el.querySelectorAll('.alert-btn');
+  cancel.onclick = () => el.remove();
+  confirm.onclick = () => { el.remove(); onConfirm(); };
+  document.body.appendChild(el);
+}
+
+function showPrompt(title, placeholder, confirmLabel, onConfirm) {
+  const el = document.createElement('div');
+  el.className = 'alert-overlay';
+  el.innerHTML =
+    `<div class="alert-box">
+      <div class="alert-body">
+        <div class="alert-title">${esc(title)}</div>
+      </div>
+      <input class="alert-input" type="text" placeholder="${esc(placeholder)}" autocapitalize="words">
+      <div class="alert-btns">
+        <button class="alert-btn">Annuler</button>
+        <button class="alert-btn" style="font-weight:700">${esc(confirmLabel)}</button>
+      </div>
+    </div>`;
+  const input = el.querySelector('input');
+  const [cancel, confirm] = el.querySelectorAll('.alert-btn');
+  cancel.onclick = () => el.remove();
+  confirm.onclick = () => { const v = input.value.trim(); el.remove(); if (v) onConfirm(v); };
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') confirm.click(); });
+  document.body.appendChild(el);
+  setTimeout(() => input.focus(), 50);
+}
+
+// ═══════════════════════════════════════════════════
+// iOS install hint
+// ═══════════════════════════════════════════════════
+function checkInstallHint() {
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone;
+  const dismissed = localStorage.getItem('installDismissed');
+  if (isIOS && !isStandalone && !dismissed) {
+    document.getElementById('install-banner').style.display = 'flex';
+  }
+}
+function dismissInstall() {
+  localStorage.setItem('installDismissed', '1');
+  document.getElementById('install-banner').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════
+// Service Worker
+// ═══════════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ═══════════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════════
+loadState();
+render();
+checkInstallHint();
+</script>
+</body>
+</html>

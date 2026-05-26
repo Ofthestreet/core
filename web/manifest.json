@@ -1,0 +1,25 @@
+{
+  "name": "Bateau Expense",
+  "short_name": "Bateau ⛵",
+  "description": "Gérez les dépenses partagées à bord",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1a6bbf",
+  "theme_color": "#1a6bbf",
+  "orientation": "portrait-primary",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
